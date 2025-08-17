@@ -1,0 +1,35 @@
+{
+  "name": "BharatPIN - Personalized PIN Generator",
+  "short_name": "BharatPIN",
+  "description": "Generate secure PINs from meaningful words inspired by India's heritage",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF9933",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["utilities", "security"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%23FF9933'/%3E%3Ctext x='96' y='120' text-anchor='middle' font-size='120' fill='white'%3E🔐%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23FF9933'/%3E%3Ctext x='256' y='320' text-anchor='middle' font-size='300' fill='white'%3E🔐%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920'%3E%3Crect width='1080' height='1920' fill='%23f9fafb'/%3E%3Crect x='40' y='200' width='1000' height='600' rx='20' fill='white' stroke='%23e5e7eb'/%3E%3Ctext x='540' y='300' text-anchor='middle' font-size='48' fill='%23111827' font-weight='bold'%3EBharatPIN%3C/text%3E%3Ctext x='540' y='350' text-anchor='middle' font-size='24' fill='%236b7280'%3EGenerate secure PINs from meaningful words%3C/text%3E%3C/svg%3E",
+      "sizes": "1080x1920",
+      "type": "image/svg+xml",
+      "form_factor": "narrow"
+    }
+  ]
+}
