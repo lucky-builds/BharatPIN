@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { generatePIN, validateInput } from '../utils/pinGenerator';
 import { savePIN } from '../utils/localStorage';
+import { isMasterPasswordSet } from '../utils/encryption';
 import HowItWorks from './HowItWorks';
 import QuotesTemplate from './QuotesTemplate';
 
@@ -33,6 +34,7 @@ export default function PINGenerator({ onPINSaved, onSavePINRequest, masterPassw
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showQuotes, setShowQuotes] = useState(false);
+  const [isAwaitingAuth, setIsAwaitingAuth] = useState(false);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -72,20 +74,21 @@ export default function PINGenerator({ onPINSaved, onSavePINRequest, masterPassw
     }
   };
 
-  const handleSave = async () => {
+  // Direct save function that bypasses authentication checks
+  const performSave = async (passwordToUse) => {
     if (!generatedPIN) return;
 
-    // Check if master password setup is required
-    if (onSavePINRequest && !onSavePINRequest()) {
-      return; // Master password setup modal will be shown
-    }
+    const pinDataToSave = {
+      ...generatedPIN,
+      label: saveLabel || generatedPIN.input
+    };
 
     setIsSaving(true);
+    setError('');
+    setIsAwaitingAuth(false);
+    
     try {
-      const saved = await savePIN({
-        ...generatedPIN,
-        label: saveLabel || generatedPIN.input
-      }, masterPassword);
+      const saved = await savePIN(pinDataToSave, passwordToUse);
 
       if (saved) {
         setSaveSuccess(true);
@@ -105,6 +108,30 @@ export default function PINGenerator({ onPINSaved, onSavePINRequest, masterPassw
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSave = async (providedMasterPassword = null) => {
+    if (!generatedPIN) return;
+
+    const pinDataToSave = {
+      ...generatedPIN,
+      label: saveLabel || generatedPIN.input
+    };
+
+    const passwordToUse = providedMasterPassword || masterPassword;
+
+    // Check if master password setup is required or authentication is needed
+    if (onSavePINRequest && (!isMasterPasswordSet() || !isAuthenticated)) {
+      const canSave = onSavePINRequest(pinDataToSave, performSave);
+      if (!canSave) {
+        setIsAwaitingAuth(true);
+        setError('');
+        return; // Master password setup modal will be shown
+      }
+    }
+
+    // If we reach here, we're authenticated and can save directly
+    await performSave(passwordToUse);
   };
 
   const handleKeyPress = (e) => {
@@ -252,14 +279,21 @@ export default function PINGenerator({ onPINSaved, onSavePINRequest, masterPassw
               
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || isAwaitingAuth}
                 className="w-full bg-green hover:bg-green-700 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded transition-colors duration-200"
               >
-                {isSaving ? 'Saving...' : 'Save PIN'}
+                {isAwaitingAuth ? 'Waiting for authentication...' : 
+                 isSaving ? 'Saving...' : 'Save PIN'}
               </button>
               
               {saveSuccess && (
                 <p className="mt-2 text-sm text-green-600 text-center">✓ PIN saved successfully!</p>
+              )}
+              
+              {isAwaitingAuth && (
+                <p className="mt-2 text-sm text-blue-600 text-center bg-blue-50 border border-blue-200 rounded p-2">
+                  Please set up or enter your master password to save this PIN securely.
+                </p>
               )}
             </div>
           </div>

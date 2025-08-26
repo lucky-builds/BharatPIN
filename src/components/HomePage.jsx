@@ -18,6 +18,7 @@ export default function HomePage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalMode, setPasswordModalMode] = useState('setup');
   const [isLocked, setIsLocked] = useState(false);
+  const [pendingSaveData, setPendingSaveData] = useState(null);
 
   useEffect(() => {
     // Check if we need master password authentication
@@ -31,6 +32,19 @@ export default function HomePage() {
       setIsAuthenticated(true);
     }
   }, [isAuthenticated]);
+
+  // Debug effect to track modal state
+  useEffect(() => {
+    console.log('Modal state changed:', { showPasswordModal, isAuthenticated, pendingSaveData: !!pendingSaveData });
+  }, [showPasswordModal, isAuthenticated, pendingSaveData]);
+
+  // Ensure modal closes when authentication is complete and no pending save
+  useEffect(() => {
+    if (isAuthenticated && showPasswordModal && !pendingSaveData) {
+      console.log('Closing modal - authenticated with no pending save');
+      setShowPasswordModal(false);
+    }
+  }, [isAuthenticated, showPasswordModal, pendingSaveData]);
 
   // Function to refresh sidebar when new PIN is saved
   const refreshSidebar = () => {
@@ -51,6 +65,14 @@ export default function HomePage() {
           await migrateToEncrypted(password);
           refreshSidebar();
         }
+
+        // Process pending save if any
+        if (pendingSaveData && pendingSaveData.onSave) {
+          const saveCallback = pendingSaveData.onSave;
+          setPendingSaveData(null);
+          // Execute the pending save operation
+          setTimeout(() => saveCallback(password), 100);
+        }
       } else {
         throw new Error('Failed to set up master password');
       }
@@ -69,6 +91,14 @@ export default function HomePage() {
         setIsLocked(false);
         setShowPasswordModal(false);
         refreshSidebar();
+
+        // Process pending save if any
+        if (pendingSaveData && pendingSaveData.onSave) {
+          const saveCallback = pendingSaveData.onSave;
+          setPendingSaveData(null);
+          // Execute the pending save operation
+          setTimeout(() => saveCallback(password), 100);
+        }
       } else {
         throw new Error('Incorrect password');
       }
@@ -89,11 +119,19 @@ export default function HomePage() {
   };
 
   // Handle save PIN request (show setup modal if needed)
-  const handleSavePINRequest = () => {
+  const handleSavePINRequest = (pinData, onSave) => {
     if (!isMasterPasswordSet()) {
+      // Store the pending save data and callback
+      setPendingSaveData({ pinData, onSave });
       setPasswordModalMode('setup');
       setShowPasswordModal(true);
       return false; // Prevent save until password is set
+    } else if (!isAuthenticated) {
+      // Store the pending save data and callback
+      setPendingSaveData({ pinData, onSave });
+      setPasswordModalMode('verify');
+      setShowPasswordModal(true);
+      return false; // Prevent save until authenticated
     }
     return true; // Allow save
   };
